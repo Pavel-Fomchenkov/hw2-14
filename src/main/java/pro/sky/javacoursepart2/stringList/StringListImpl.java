@@ -1,5 +1,6 @@
 package pro.sky.javacoursepart2.stringList;
 
+import com.sun.jdi.connect.Connector;
 import pro.sky.javacoursepart2.exceptions.*;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ public class StringListImpl implements StringList {
 
     public StringListImpl(int capacity) {
         if (capacity < 1) {
-            throw new IllegalCapacityException("Capacity " + capacity + " cannot be smaller than 1");
+            throw new IllegalCapacityException("Capacity " + capacity + " cannot be lower than 1");
         }
         this.capacity = capacity;
     }
@@ -26,7 +27,7 @@ public class StringListImpl implements StringList {
     @Override
     public String add(String item) {
         if (item == null) {
-            throw new NothingToAddException("Cannot add null to StringList");
+            throw new NothingToAddException("String argument is null");
         }
         if (size < capacity) {
             STORAGE[size] = item;
@@ -58,6 +59,9 @@ public class StringListImpl implements StringList {
 
     @Override
     public String[] add(String... items) {
+        if (items.length == 0) {
+            throw new NothingToAddException("String argument is null");
+        }
         if (items.length > capacity - size) {
             throw new InsufficientCapacityException("Insufficient storage");
         } else {
@@ -70,12 +74,17 @@ public class StringListImpl implements StringList {
     @Override
     public String[] add(int index, String... items) {
         if (index < 0) throw new IllegalIndexException("Destination index " + index + " cannot be negative");
-        if (index > capacity - 1 - items.length)
-            throw new IllegalIndexException("Destination index " + index + " is beyond capacity");
-        if (items.length > capacity - size) {
-            throw new InsufficientCapacityException("Insufficient storage");
+        if (items.length == 0) {
+            throw new NothingToAddException("String argument is null");
+        }
+        if (index > capacity - items.length) {
+            throw new IllegalIndexException("Insuffisient storage to add items from index " + index);
         } else {
-            System.arraycopy(STORAGE, index, STORAGE, size, items.length);
+            if (index > size) {
+                index = size;
+            }
+            System.arraycopy(STORAGE, index, STORAGE, index + items.length,
+                    size - index);
             System.arraycopy(items, 0, STORAGE, index, items.length);
             size += items.length;
         }
@@ -135,11 +144,10 @@ public class StringListImpl implements StringList {
     public String remove(int index) {
         indexChecker(index);
         if (index > size - 1) {
-            throw new IllegalIndexException("item with index " + index + " is already null");
+            throw new IllegalIndexException("item with index " + index + " does not exist");
         }
         String output = STORAGE[index];
-        STORAGE[index] = null;
-        System.arraycopy(STORAGE, index, STORAGE, index + 1, size - 1 - index);
+        System.arraycopy(STORAGE, index + 1, STORAGE, index, size - 1 - index);
         size--;
         return output;
     }
@@ -192,7 +200,7 @@ public class StringListImpl implements StringList {
     // если передан null.
     @Override
     public boolean equals(StringList otherList) { // Метод выполняет ту же функцию, что и метод в java.lang, но не сравнивает по классу, т.к. аргумент должен быть того же класса
-        if (otherList == null || this.size != otherList.size()) {
+        if (this.size != otherList.size()) {
             return false;
         }
         for (int i = 0; i < size; i++) {
@@ -249,7 +257,7 @@ public class StringListImpl implements StringList {
     }
 
     private void indexChecker(int index) {
-        if (index < 0) throw new IllegalIndexException("Destination index " + index + " cannot be negative");
+        if (index < 0) throw new IllegalIndexException("Argument index " + index + " cannot be negative");
         if (index > capacity - 1) throw new IllegalIndexException("Destination index " + index + " is beyond capacity");
     }
 
